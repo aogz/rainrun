@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rainrun
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rainrun
+  template:
+    metadata:
+      labels:
+        app: rainrun
+    spec:
+      containers:
+      - name: rainrun-auth
+        image: aogurzow/rainrun-auth
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 3000
