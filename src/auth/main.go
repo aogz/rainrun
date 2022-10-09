@@ -12,7 +12,5 @@ func main() {
 	http.HandleFunc("/", index)
 	http.HandleFunc("/login", RedirectToOAuth)
 	http.HandleFunc("/oauth/callback", OAuthCallback)
-	http.HandleFunc("/webhook", ReceiveWebhook)
-	http.HandleFunc("/webhook/confirm", ConfirmWebhook)
 	http.ListenAndServe(":3000", nil)
 }
