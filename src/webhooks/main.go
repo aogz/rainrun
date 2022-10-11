@@ -24,6 +24,5 @@ func main() {
 	go CreateWebhook()
 
 	http.HandleFunc("/webhook/", ReceiveWebhook)
-	http.HandleFunc("/webhook/confirm/", ConfirmWebhook)
 	http.ListenAndServe(":3001", nil)
 }
