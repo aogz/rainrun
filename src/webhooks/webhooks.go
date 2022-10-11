@@ -3,13 +3,15 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
 )
 
 func CreateWebhook() error {
-	callbackURL := fmt.Sprintf("http://%s/webhook/confirm", os.Getenv("APP_DOMAIN"))
+	callbackURL := fmt.Sprintf("https://%s/webhook/", os.Getenv("APP_DOMAIN"))
+	logger.info.Printf("Setting callback url to %s\n", callbackURL)
 	queryParams := url.Values{
 		"client_id":     {os.Getenv("STRAVA_CLIENT_ID")},
 		"client_secret": {os.Getenv("STRAVA_CLIENT_SECRET")},
@@ -28,33 +30,48 @@ func CreateWebhook() error {
 	if err != nil {
 		return fmt.Errorf("error sending post request: %s", err)
 	}
+
 	defer response.Body.Close()
+
+	responseBytes, err := io.ReadAll(response.Body)
+	if err != nil {
+		logger.err.Fatalln(err)
+	} else {
+		logger.info.Println(string(responseBytes))
+	}
 	return nil
 }
 
 func ConfirmWebhook(w http.ResponseWriter, r *http.Request) {
 	data := ConfirmWebhookResponse{
-		Challenge: "foobar",
+		Challenge: r.URL.Query().Get("hub.challenge"),
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(data)
 }
 
 func ReceiveWebhook(w http.ResponseWriter, r *http.Request) {
-	var event WebhookPayload
-	err := json.NewDecoder(r.Body).Decode(&event)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
+	if r.Method == "GET" {
+		ConfirmWebhook(w, r)
+	} else {
+		var event WebhookPayload
+		err := json.NewDecoder(r.Body).Decode(&event)
+		if err != nil {
+			errorMessage := fmt.Sprintf("unable to parse: %s", err.Error())
+			logger.err.Fatalln(errorMessage)
+			http.Error(w, errorMessage, http.StatusBadRequest)
+			return
+		}
 
-	fmt.Printf(
-		"Event received: event_type=%s, object_type=%s, id=%s, owner_id=%s\n",
-		event.AspectType,
-		event.ObjectType,
-		event.ObjectID,
-		event.OwnerID,
-	)
-	fmt.Fprintf(w, "Person: %+v", event)
+		logger.info.Printf(
+			"Event received: event_type=%s, object_type=%s, id=%s, owner_id=%s\n",
+			event.AspectType,
+			event.ObjectType,
+			event.ObjectID,
+			event.OwnerID,
+		)
+
+		fmt.Fprintf(w, "Person: %+v", event)
+	}
 }
