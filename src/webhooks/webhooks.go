@@ -65,7 +65,7 @@ func ReceiveWebhook(w http.ResponseWriter, r *http.Request) {
 		}
 
 		logger.info.Printf(
-			"Event received: event_type=%s, object_type=%s, id=%s, owner_id=%s\n",
+			"Event received: event_type=%s, object_type=%s, id=%d, owner_id=%d\n",
 			event.AspectType,
 			event.ObjectType,
 			event.ObjectID,
