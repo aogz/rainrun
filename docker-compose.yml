@@ -16,6 +16,14 @@ services:
       - .env
     volumes:
       - ./src/webhooks:/app
+  activities:
+    build: ./src/activities
+    ports:
+      - "3002:3002"
+    env_file:
+      - .env
+    volumes:
+      - ./src/activities:/app
   nginx:
     image: nginx:latest
     volumes:
